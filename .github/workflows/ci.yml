@@ -19,6 +19,7 @@ env:
 jobs:
   format:
     name: Check formatting
+    environment: development
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -42,6 +43,7 @@ jobs:
 
   test:
     name: Build and test
+    environment: development
     runs-on: ubuntu-latest
     services:
       db:
