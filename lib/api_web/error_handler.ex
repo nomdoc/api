@@ -36,12 +36,20 @@ defmodule APIWeb.ErrorHandler do
         end)
       end)
       |> Keyword.new()
-      |> Enum.map(fn {k, v} when is_map(v) ->
+      |> Enum.map(fn
+        # When `v` is something like this ["Email address is invalid."]}
+        {k, v} when is_list(v) ->
+          %{
+            field: Accent.Case.Camel.call(k),
+            message: List.first(v)
+          }
+
         # When `v` is something like this %{value: ["has already been taken"]}
-        %{
-          field: Accent.Case.Camel.call(k),
-          message: v |> Keyword.new() |> List.first() |> elem(1) |> List.first()
-        }
+        {k, v} when is_map(v) ->
+          %{
+            field: Accent.Case.Camel.call(k),
+            message: v |> Keyword.new() |> List.first() |> elem(1) |> List.first()
+          }
       end)
 
     create_error(:failed_validation, 422, "Failed validation.", errors)
