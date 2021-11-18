@@ -8,7 +8,6 @@ env:
   CONTAINER_REGISTRY_URL: ${{secrets.CONTAINER_REGISTRY_URL}}
   CONTAINER_IMAGE_NAME: "api"
   DIGITAL_OCEAN_ACCESS_TOKEN: ${{secrets.DIGITAL_OCEAN_ACCESS_TOKEN}}
-  MIX_ENV: "prod"
 
 jobs:
   build_and_push:
