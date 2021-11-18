@@ -76,7 +76,7 @@ defmodule API.MixProject do
       {:dotenvy, "~> 0.5.0"},
 
       # Dev / Test libs
-      {:boundary, "~> 0.8.0", only: [:dev, :test], runtime: false},
+      {:boundary, "~> 0.8.0", runtime: false},
       {:credo, "~> 1.5.6", only: [:dev, :test], runtime: false},
       {:ex_machina, "~> 2.7.0", only: [:test]},
       {:faker, "~> 0.16.0", only: [:test]},

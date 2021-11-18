@@ -1,0 +1,45 @@
+name: Build, Push and Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  CONTAINER_REGISTRY_URL: ${{secrets.CONTAINER_REGISTRY_URL}}
+  CONTAINER_IMAGE_NAME: "api"
+  DIGITAL_OCEAN_ACCESS_TOKEN: ${{secrets.DIGITAL_OCEAN_ACCESS_TOKEN}}
+  MIX_ENV: "prod"
+  DATABASE_URL: ${{secrets.DATABASE_URL }}
+  DATABASE_POOL_SIZE: ${{secrets.DATABASE_POOL_SIZE}}
+  PORT: ${{secrets.PORT}}
+  HOST: ${{secrets.HOST}}
+  HOST_PORT: ${{secrets.HOST_PORT}}
+  SECRET_KEY_BASE: ${{secrets.SECRET_KEY_BASE}}
+  LOGIN_TOKEN_HASH_KEY: ${{secrets.LOGIN_TOKEN_HASH_KEY}}
+  ACCESS_TOKEN_SIGNER_KEY: ${{secrets.ACCESS_TOKEN_SIGNER_KEY}}
+  GOOGLE_PROJECT_ID: ${{secrets.GOOGLE_PROJECT_ID}}
+  GOOGLE_OAUTH_CLIENT_ID: ${{secrets.GOOGLE_OAUTH_CLIENT_ID}}
+  GOOGLE_RECAPTCHA_API_KEY: ${{secrets.GOOGLE_RECAPTCHA_API_KEY}}
+  GOOGLE_RECAPTCHA_SITE_KEY: ${{secrets.GOOGLE_RECAPTCHA_SITE_KEY}}
+
+jobs:
+  build_and_push:
+    name: Build and Push Docker Image
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Build container image
+        run: docker build -t $(echo $CONTAINER_REGISTRY_URL)/$(echo $CONTAINER_IMAGE_NAME):$(echo $GITHUB_SHA | head -c7) .
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: $(echo $DIGITAL_OCEAN_ACCESS_TOKEN)
+
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push $(echo $CONTAINER_REGISTRY_URL)/$(echo $CONTAINER_IMAGE_NAME):$(echo $GITHUB_SHA | head -c7)
