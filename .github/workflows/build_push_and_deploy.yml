@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v1
 
       - name: Build container image
-        run: docker build -t ${{env.CONTAINER_REGISTRY_URL}}/${{env.CONTAINER_IMAGE_NAME}}:${{github.sha}} | head -c7) .
+        run: docker build -t ${{env.CONTAINER_REGISTRY_URL}}/${{env.CONTAINER_IMAGE_NAME}}:${{github.sha}} .
 
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
@@ -29,4 +29,4 @@ jobs:
         run: doctl registry login --expiry-seconds 600
 
       - name: Push image to DigitalOcean Container Registry
-        run: docker push ${{env.CONTAINER_REGISTRY_URL}}/${{env.CONTAINER_IMAGE_NAME}}:${{github.sha}} | head -c7)
+        run: docker push ${{env.CONTAINER_REGISTRY_URL}}/${{env.CONTAINER_IMAGE_NAME}}:${{github.sha}}
