@@ -18,8 +18,6 @@ defmodule API.User do
 
     has_many :logins, API.Login
     has_many :refresh_tokens, API.RefreshToken
-    has_many :organization_invites, API.OrganizationInvite
-    has_many :organization_memberships, API.OrganizationMembership
 
     timestamps()
   end

@@ -43,15 +43,11 @@ defmodule APIWeb do
       alias API.Auth
       alias API.HandleName
       alias API.HandleNames
-      alias API.Organization
-      alias API.OrganizationInvite
-      alias API.OrganizationMembership
-      alias API.Organizations
       alias API.RefreshToken
       alias API.Repo
       alias API.User
       alias API.Users
-      alias APIWeb.EnforceOrganizationAccessMiddleware
+
       alias APIWeb.EnforceProfileAccessMiddleware
       alias APIWeb.EnsureAuthenticatedMiddleware
       alias Ecto.Changeset

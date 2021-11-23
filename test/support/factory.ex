@@ -10,36 +10,6 @@ defmodule API.Factory do
     }
   end
 
-  def organization_factory() do
-    %API.Organization{
-      handle_name: build(:handle_name)
-    }
-  end
-
-  def organization_invite_factory() do
-    %API.OrganizationInvite{
-      organization: build(:organization),
-      email_address: Faker.Internet.email(),
-      role: :member
-    }
-  end
-
-  def user_organization_invite_factory() do
-    %API.OrganizationInvite{
-      organization: build(:organization),
-      user: build(:user),
-      role: :member
-    }
-  end
-
-  def organization_membership_factory() do
-    %API.OrganizationMembership{
-      organization: build(:organization),
-      user: build(:user),
-      role: :member
-    }
-  end
-
   def handle_name_factory() do
     %API.HandleName{
       value: API.HandleName.generate_value()

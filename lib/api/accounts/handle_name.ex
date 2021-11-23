@@ -5,7 +5,6 @@ defmodule API.HandleName do
 
   schema "handle_name" do
     belongs_to :user, API.User
-    belongs_to :organization, API.Organization
     field :value, :string
     timestamps()
   end

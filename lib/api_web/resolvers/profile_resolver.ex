@@ -42,11 +42,10 @@ defmodule APIWeb.ProfileResolver do
   end
 
   union :profile do
-    types([:user, :organization])
+    types([:user])
 
     resolve_type(fn
       %API.User{}, _resolution -> :user
-      %API.Organization{}, _resolution -> :organization
     end)
   end
 
@@ -132,11 +131,6 @@ defmodule APIWeb.ProfileResolver do
             with {:ok, %User{}} <- Users.update_handle_name(user_id, new_handle_name),
                  do: {:ok, %{handle_name: new_handle_name}}
 
-          {:ok, %Organization{id: org_id}} ->
-            with {:ok, %Organization{}} <-
-                   Organizations.update_handle_name(org_id, new_handle_name),
-                 do: {:ok, %{handle_name: new_handle_name}}
-
           reply ->
             reply
         end
@@ -175,11 +169,6 @@ defmodule APIWeb.ProfileResolver do
             with {:ok, %User{}} <- Users.update_display_name(user_id, display_name),
                  do: {:ok, %{display_name: display_name}}
 
-          {:ok, %Organization{id: org_id}} ->
-            with {:ok, %Organization{}} <-
-                   Organizations.update_display_name(org_id, display_name),
-                 do: {:ok, %{display_name: display_name}}
-
           reply ->
             reply
         end
@@ -216,10 +205,6 @@ defmodule APIWeb.ProfileResolver do
         case HandleNames.get_account(handle_name) do
           {:ok, %User{id: user_id}} ->
             with {:ok, %User{}} <- Users.update_bio(user_id, bio),
-                 do: {:ok, %{bio: bio}}
-
-          {:ok, %Organization{id: org_id}} ->
-            with {:ok, %Organization{}} <- Organizations.update_bio(org_id, bio),
                  do: {:ok, %{bio: bio}}
 
           reply ->
