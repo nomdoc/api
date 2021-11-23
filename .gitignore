@@ -46,6 +46,7 @@ api-\*.tar
 
 .env
 .env.test
+.env.production
 
 # A folder for you to write down your thoughts, ideas or whatever.
 
