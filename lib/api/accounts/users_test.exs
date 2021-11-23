@@ -3,7 +3,6 @@ defmodule API.UsersTest do
 
   use API.DataCase, async: true
 
-  alias API.OrganizationInvite
   alias API.User
   alias API.Users
 
@@ -11,14 +10,7 @@ defmodule API.UsersTest do
     test "creates a user if not exists." do
       assert {:ok, %User{} = user} = Users.get_or_create("kokjinsam@gmail.com")
 
-      user =
-        Repo.preload(user, [
-          :handle_name,
-          :logins,
-          :refresh_tokens,
-          :organization_invites,
-          :organization_memberships
-        ])
+      user = Repo.preload(user, [:handle_name, :logins, :refresh_tokens])
 
       assert user.role == :user
       assert user.new?
@@ -29,19 +21,6 @@ defmodule API.UsersTest do
       assert user.gender == :unspecified
       assert Enum.empty?(user.logins)
       assert Enum.empty?(user.refresh_tokens)
-      assert Enum.empty?(user.organization_invites)
-      assert Enum.empty?(user.organization_memberships)
-    end
-
-    test "claims all organization invites that belong to the user." do
-      %OrganizationInvite{id: org_invite_id} = org_invite = insert(:organization_invite)
-
-      assert {:ok, %User{} = user} = Users.get_or_create(org_invite.email_address)
-
-      user = Repo.preload(user, [:organization_invites], force: true)
-
-      assert length(user.organization_invites) == 1
-      assert %OrganizationInvite{id: ^org_invite_id} = hd(user.organization_invites)
     end
 
     test "returns the user if user has already been created." do

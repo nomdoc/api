@@ -4,7 +4,6 @@ defmodule API.Users do
   use API, :context
 
   alias API.HandleName
-  alias API.OrganizationInvite
   alias API.User
 
   @spec get_or_create(binary()) :: {:ok, User.t()}
@@ -16,7 +15,6 @@ defmodule API.Users do
       nil ->
         with {:ok, user} <- maybe_create_user(email_address),
              :ok <- maybe_create_handle_name(user),
-             :ok <- maybe_claim_organization_invites(user),
              do: {:ok, user}
     end
   end
@@ -45,21 +43,6 @@ defmodule API.Users do
           {:ok, %HandleName{}} -> :ok
           reply -> reply
         end
-
-      %User{} ->
-        :ok
-    end
-  end
-
-  defp maybe_claim_organization_invites(%User{} = user) do
-    case user do
-      %User{new?: true} = user ->
-        Repo.update_all(
-          OrganizationInvite.get_by_email_address(user.email_address),
-          set: [user_id: user.id, email_address: nil, updated_at: DateTime.utc_now()]
-        )
-
-        :ok
 
       %User{} ->
         :ok

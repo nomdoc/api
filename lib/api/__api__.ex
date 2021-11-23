@@ -7,14 +7,10 @@ defmodule API do
       # Contexts
       Auth,
       HandleNames,
-      Organizations,
       Users,
 
       # Model
       HandleName,
-      Organization,
-      OrganizationInvite,
-      OrganizationMembership,
       RefreshToken,
       User,
 

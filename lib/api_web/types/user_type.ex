@@ -3,7 +3,7 @@ defmodule APIWeb.UserType do
 
   use Absinthe.Schema.Notation
 
-  import Absinthe.Resolution.Helpers, only: [dataloader: 3, on_load: 2]
+  import Absinthe.Resolution.Helpers, only: [dataloader: 3]
   import APIWeb.Utils
 
   alias API.User
@@ -38,10 +38,6 @@ defmodule APIWeb.UserType do
 
     @desc "Indicates whether the user is an admin at Nomdoc."
     field :is_admin, non_null(:boolean), resolve: &is_admin/3
-
-    @desc "A list of public and private organization memberships. Returns null if user is not the viewing user."
-    field :organization_memberships, list_of(:organization_membership),
-      resolve: &organization_memberships/3
   end
 
   defp email_address(%User{} = user, _args, resolution) do
@@ -72,27 +68,5 @@ defmodule APIWeb.UserType do
 
   defp is_admin(%User{} = user, _args, _resolution) do
     {:ok, user.role in [:superuser, :admin]}
-  end
-
-  defp organization_memberships(%User{id: user_id} = user, _args, resolution) do
-    case get_current_user(resolution) do
-      {:ok, %User{role: role}} when role in [:superuser, :admin] ->
-        load_and_get_organization_memberships(resolution, user)
-
-      {:ok, %User{id: ^user_id}} ->
-        load_and_get_organization_memberships(resolution, user)
-
-      _reply ->
-        {:ok, nil}
-    end
-  end
-
-  defp load_and_get_organization_memberships(resolution, %User{} = user) do
-    batch_key = :organization_memberships
-
-    resolution
-    |> get_loader!()
-    |> Dataloader.load(:repo, batch_key, user)
-    |> on_load(fn loader -> {:ok, Dataloader.get(loader, :repo, batch_key, user)} end)
   end
 end

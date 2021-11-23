@@ -14,7 +14,7 @@ defmodule API.AuthTest do
 
       assert {:ok, %User{new?: true} = user} = Auth.login_with_token("kokjinsam@gmail.com")
 
-      user = Repo.preload(user, [:handle_name, :logins, :organization_invites], force: true)
+      user = Repo.preload(user, [:handle_name, :logins], force: true)
 
       assert length(user.logins) == 1
       assert %{success: 1, failure: 0} = Oban.drain_queue(queue: :mailer)
@@ -51,11 +51,10 @@ defmodule API.AuthTest do
       assert %User{} =
                user =
                Repo.get_by(User, email_address: google_email_address)
-               |> Repo.preload([:handle_name, :logins, :organization_invites])
+               |> Repo.preload([:handle_name, :logins])
 
       assert is_binary(user.handle_name.value)
       assert Enum.empty?(user.logins)
-      assert Enum.empty?(user.organization_invites)
     end
 
     test "throws error if Google User's email address is not verified" do

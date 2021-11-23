@@ -5,13 +5,9 @@ defmodule APIWeb.Schema do
 
   import_types(Absinthe.Type.Custom)
   import_types(APIWeb.ConnectionType)
-  import_types(APIWeb.OrganizationInviteType)
-  import_types(APIWeb.OrganizationMembershipType)
-  import_types(APIWeb.OrganizationType)
   import_types(APIWeb.UserType)
   import_types(APIWeb.Uuid4Type)
 
-  import_types(APIWeb.OrganizationResolver)
   import_types(APIWeb.ProfileResolver)
   import_types(APIWeb.UserResolver)
 
@@ -21,7 +17,6 @@ defmodule APIWeb.Schema do
   end
 
   mutation do
-    import_fields(:organization_mutations)
     import_fields(:profile_mutations)
   end
 
