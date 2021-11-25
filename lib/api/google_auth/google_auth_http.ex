@@ -15,7 +15,7 @@ defmodule API.GoogleAuthHttp do
          %GoogleUser{
            id: Map.get(claims, "sub"),
            email_address: Map.get(claims, "email"),
-           email_address_verified: Map.get(claims, "email_verified"),
+           email_address_verified?: Map.get(claims, "email_verified"),
            name: Map.get(claims, "name")
          }}
 
