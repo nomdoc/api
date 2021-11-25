@@ -85,7 +85,7 @@ defmodule APIWeb.ErrorHandler do
       :unsupported_response_type -> {422, "Please provide valid response type."}
       :unsupported_grant_type -> {422, "Please provide valid grant type."}
       :invalid_json -> {400, "Invalid JSON."}
-      :login_failed -> {422, "Unable to login, please try again later."}
+      :user_already_registered -> {422, "You have already registered. Please proceed to login."}
       :account_not_found -> {404, "Unable to find account."}
       reply -> handle_unhandled_code(reply)
     end
