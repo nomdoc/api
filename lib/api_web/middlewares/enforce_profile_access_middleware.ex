@@ -14,7 +14,7 @@ defmodule APIWeb.EnforceProfileAccessMiddleware do
 
   import Ecto.Changeset
   import API.Utils
-  import APIWeb.Utils
+  import APIWeb.SchemaHelpers
 
   alias API.HandleNames
   alias APIWeb.EnsureAuthenticatedMiddleware

@@ -3,6 +3,8 @@ defmodule API.Utils do
 
   import Ecto.Changeset
 
+  alias Ecto.Changeset
+
   @doc """
   Generates an `n` digit code padded with leading zero(s). For example, "012345" and "123456".
   """
@@ -82,7 +84,59 @@ defmodule API.Utils do
   end
 
   @doc """
+  Asserts a field is a truthy value.
+
+  ## Options
+
+    * `message` - The message on failure.
+
+  ## Examples
+
+      validate_assertion(changeset, :password, &password_breached?/1)
+  """
+  @spec validate_assertion(Changeset.t(), atom(), (any() -> boolean()), opts) :: Changeset.t()
+        when opts: [message: binary()]
+  def validate_assertion(%Changeset{} = changeset, field, func, opts \\ []) do
+    value = get_field(changeset, field)
+    message = Keyword.get(opts, :message) || "Expected to be true."
+
+    if func.(value) do
+      changeset
+    else
+      add_error(changeset, field, message)
+    end
+  end
+
+  @doc """
+  Asserts a field is false.
+
+  ## Options
+
+    * `message` - The message on failure.
+
+  ## Examples
+
+      validate_assertion(changeset, :password, &password_breached?/1)
+  """
+  @spec validate_refutation(Changeset.t(), atom(), (any() -> boolean()), opts) :: Changeset.t()
+        when opts: [message: binary()]
+  def validate_refutation(%Changeset{} = changeset, field, func, opts \\ []) do
+    value = get_field(changeset, field)
+    message = Keyword.get(opts, :message) || "Expected to be true."
+
+    if func.(value) do
+      add_error(changeset, field, message)
+    else
+      changeset
+    end
+  end
+
+  @doc """
   Validates that one of the fields are present in the changeset.
+
+  ## Options
+
+    * `message` - The message on failure.
 
   ## Examples
 
@@ -92,12 +146,16 @@ defmodule API.Utils do
 
   Copied from https://stackoverflow.com/a/42212602/3372087.
   """
-  @spec validate_required_one_of(Ecto.Changeset.t(), [atom()]) :: Ecto.Changeset.t()
-  def validate_required_one_of(%Ecto.Changeset{} = changeset, fields) do
+  @spec validate_required_one_of(Changeset.t(), [atom()], opts) :: Changeset.t()
+        when opts: [message: binary()]
+  def validate_required_one_of(%Changeset{} = changeset, fields, opts \\ []) do
+    message =
+      Keyword.get(opts, :message) || "One of these fields must be present: #{inspect(fields)}"
+
     if Enum.any?(fields, &present?(changeset, &1)) do
       changeset
     else
-      add_error(changeset, hd(fields), "One of these fields must be present: #{inspect(fields)}")
+      add_error(changeset, hd(fields), message)
     end
   end
 
@@ -105,25 +163,28 @@ defmodule API.Utils do
   Validates email address format and ensures email address exists and is not a
   temporary email.
 
+  ## Options
+
+    * `message` - The message on failure.
+
   ## Examples
 
       validate_email_address(changeset, :email_address)
   """
-  @spec validate_email_address(Ecto.Changeset.t(), atom(), opts) :: Ecto.Changeset.t()
-        when opts: [optional?: boolean(), message: binary()]
-  def validate_email_address(%Ecto.Changeset{} = changeset, field, opts \\ []) do
+  @spec validate_email_address(Changeset.t(), atom(), opts) :: Changeset.t()
+        when opts: [message: binary()]
+  def validate_email_address(%Changeset{} = changeset, field, opts \\ []) do
     value = get_field(changeset, field)
-    optional? = Keyword.get(opts, :optional?) || false
     message = Keyword.get(opts, :message) || "Email address is invalid."
 
     cond do
-      is_nil(value) and optional? -> changeset
+      is_nil(value) -> changeset
       is_binary(value) and valid_email?(value) -> changeset
       true -> add_error(changeset, field, message)
     end
   end
 
-  defp present?(%Ecto.Changeset{} = changeset, field) do
+  defp present?(%Changeset{} = changeset, field) do
     value = get_field(changeset, field)
     value && value != ""
   end
@@ -136,7 +197,6 @@ defmodule API.Utils do
     * `scrub?` - Indicates how whitespace should be removed. By default, string
       is always trimmed.
     * `transform` - Indicates what transformation needs to be done.
-    * `optional?` - Indicates error will not be thrown if the value is nil.
     * `message` - The message on failure.
 
   ## Examples
@@ -144,29 +204,22 @@ defmodule API.Utils do
       parse_string(changeset, :name)
       parse_string(changeset, :name, scrub: :all)
       parse_string(changeset, :name, scrub: :upcase)
-      parse_string(changeset, :name, optional?: true)
       parse_string(changeset, :name, message: "Not a good string.")
   """
-  @spec parse_string(Ecto.Changeset.t(), atom(), opts) :: Ecto.Changeset.t()
+  @spec parse_string(Changeset.t(), atom(), opts) :: Changeset.t()
         when opts: [
                scrub: :trim | :all,
                transform: :downcase | :upcase | :capitalize,
-               optional?: boolean(),
                message: binary()
              ]
-  def parse_string(%Ecto.Changeset{} = changeset, field, opts \\ []) do
+  def parse_string(%Changeset{} = changeset, field, opts \\ []) do
     value = get_field(changeset, field)
     scrub_type = Keyword.get(opts, :scrub) || :trim
     transform_type = Keyword.get(opts, :transform)
-    message = Keyword.get(opts, :message) || "Invalid string."
 
     with {:ok, value} <- scrub_value(value, scrub_type),
-         {:ok, value} <- transform_value(value, transform_type) do
-      put_change(changeset, field, value)
-    else
-      _reply ->
-        add_error(changeset, field, message)
-    end
+         {:ok, value} <- transform_value(value, transform_type),
+         do: put_change(changeset, field, value)
   end
 
   defp scrub_value(value, type) do

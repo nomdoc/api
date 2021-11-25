@@ -4,7 +4,7 @@ defmodule APIWeb.UserType do
   use Absinthe.Schema.Notation
 
   import Absinthe.Resolution.Helpers, only: [dataloader: 3]
-  import APIWeb.Utils
+  import APIWeb.SchemaHelpers
 
   alias API.User
 
