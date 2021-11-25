@@ -3,6 +3,7 @@ defmodule APIWeb.Router do
 
   pipeline :rest do
     plug :accepts, ["json"]
+    plug APIWeb.CurrentUserPlug
     plug Accent.Plug.Request, transformer: Accent.Case.Snake
 
     plug Accent.Plug.Response,
@@ -13,7 +14,16 @@ defmodule APIWeb.Router do
 
   pipeline :graph do
     plug :accepts, ["json"]
+    plug APIWeb.CurrentUserPlug
     plug APIWeb.SchemaContextPlug
+  end
+
+  scope "/accounts", APIWeb do
+    pipe_through :rest
+
+    post "/register", AccountController, :register
+    post "/update-password", AccountController, :update_password
+    post "/reset-password", AccountController, :reset_password
   end
 
   scope "/oauth", APIWeb do

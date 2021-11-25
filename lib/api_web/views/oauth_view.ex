@@ -3,10 +3,6 @@ defmodule APIWeb.OAuthView do
 
   use APIWeb, :view
 
-  def render("authorize.json", %{data: %{email_address: email_address}}) do
-    %{email_address: email_address}
-  end
-
   def render("token.json", %{data: data}) do
     %{
       refresh_token: data.refresh_token,
