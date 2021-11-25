@@ -1,4 +1,4 @@
-defmodule APIWeb.Utils do
+defmodule APIWeb.SchemaHelpers do
   @moduledoc false
 
   @spec get_current_user!(Absinthe.Resolution.t()) :: API.User.t()
