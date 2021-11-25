@@ -28,13 +28,23 @@ defmodule API.GoogleAuth do
     `<OAUTH_CLIENT_ID>.apps.googleusercontent.com`.
   """
 
-  @spec get_service() :: module()
-  def get_service() do
-    Application.fetch_env!(:api, API.GoogleAuth)[:service]
+  @behaviour API.GoogleAuthProvider
+
+  alias API.GoogleUser
+
+  @spec impl() :: module()
+  def impl() do
+    Application.fetch_env!(:api, API.GoogleAuth)[:impl]
   end
 
-  @spec get_config() :: %{client_id: binary()}
-  def get_config() do
+  @spec config() :: %{client_id: binary()}
+  def config() do
     %{client_id: Application.fetch_env!(:api, API.GoogleAuth)[:client_id]}
+  end
+
+  @spec verify_id_token(binary()) ::
+          {:ok, GoogleUser.t()} | {:error, :invalid_google_id_token}
+  def verify_id_token(token) do
+    impl().verify_id_token(token)
   end
 end

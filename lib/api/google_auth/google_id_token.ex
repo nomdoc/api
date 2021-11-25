@@ -12,7 +12,7 @@ defmodule API.GoogleIdToken do
 
   @impl Joken.Config
   def token_config() do
-    config = GoogleAuth.get_config()
+    config = GoogleAuth.config()
 
     default_claims(skip: [:aud, :iss])
     |> add_claim("iss", nil, &(&1 == @iss))
