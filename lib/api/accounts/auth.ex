@@ -71,10 +71,8 @@ defmodule API.Auth do
           | {:error, :user_registered_with_password | :google_email_address_not_verified}
   def verify_google_id_token(token) do
     Repo.transact(fn ->
-      google_auth_service = GoogleAuth.get_service()
-
       # vNext track token? limit to one-use only.
-      with {:ok, %GoogleUser{} = google_user} <- google_auth_service.verify_id_token(token),
+      with {:ok, %GoogleUser{} = google_user} <- GoogleAuth.verify_id_token(token),
            :ok <- ensure_google_user_email_verified(google_user) do
         case Users.get_user(google_user.email_address, google_user.id) do
           {:ok, %User{password_hash: password_hash}} when is_binary(password_hash) ->
