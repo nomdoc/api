@@ -15,6 +15,7 @@ defmodule API do
       User,
 
       # Modules
+      Pwned,
       Regex,
       Repo,
       Utils

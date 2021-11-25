@@ -27,8 +27,10 @@ defmodule APIWeb do
       import APIWeb.Gettext
       import Ecto.Changeset
       import API.Utils
+      import APIWeb.ControllerHelpers
 
       alias APIWeb.Router.Helpers, as: Routes
+      alias Ecto.Changeset
     end
   end
 
@@ -38,7 +40,7 @@ defmodule APIWeb do
 
       import Ecto.Changeset
       import API.Utils
-      import APIWeb.Utils
+      import APIWeb.SchemaHelpers
 
       alias API.Auth
       alias API.HandleName

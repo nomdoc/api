@@ -3,7 +3,8 @@ defmodule APIWeb.SchemaContextPlug do
 
   @behaviour Plug
 
-  import Plug.Conn
+  alias API.User
+
   require Logger
 
   @impl Plug
@@ -19,13 +20,14 @@ defmodule APIWeb.SchemaContextPlug do
   end
 
   defp build_current_user(ctx, %Plug.Conn{} = conn) do
-    with ["Bearer " <> access_token] <- get_req_header(conn, "authorization"),
-         {:ok, user} <- API.Auth.debug_access_token(access_token) do
-      Logger.metadata(user_id: user.id)
-      Logger.debug("Assigned current_user")
-      Map.put(ctx, :current_user, user)
-    else
-      _reply -> ctx
+    case conn.assigns[:current_user] do
+      nil ->
+        ctx
+
+      %User{} = user ->
+        Logger.metadata(user_id: user.id)
+        Logger.debug("Put Absinthe context 'current_user'")
+        Map.put(ctx, :current_user, user)
     end
   end
 end
