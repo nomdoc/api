@@ -8,28 +8,51 @@ defmodule API.AuthTest do
   alias API.RefreshToken
   alias API.User
 
-  describe "login_with_token/1" do
-    test "creates a new user, if not registered, and initiates a login." do
-      # TODO assert Mailer stub
+  describe "register_with_password/2" do
+    test "successfully registers the user" do
+      assert {:ok, %User{}} =
+               Auth.register_with_password(Faker.Internet.email(), Faker.String.base64())
+    end
 
-      assert {:ok, %User{new?: true} = user} = Auth.login_with_token("kokjinsam@gmail.com")
+    test "throws error if user already registered with a Google Account." do
+      user = insert(:user_with_google_account)
 
-      user = Repo.preload(user, [:handle_name, :logins], force: true)
+      assert {:error, :user_registered_with_google_account} =
+               Auth.register_with_password(user.email_address, Faker.String.base64())
+    end
 
-      assert length(user.logins) == 1
-      assert %{success: 1, failure: 0} = Oban.drain_queue(queue: :mailer)
+    test "throws error if user already registered." do
+      user = insert(:user)
+
+      assert {:error, :user_already_registered} =
+               Auth.register_with_password(user.email_address, Faker.String.base64())
     end
   end
 
-  describe "verify_login_token/1" do
-    test "validates login token and returns auth tokens." do
+  describe "verify_password/2" do
+    test "validates the password and returns auth tokens." do
       user = insert(:user)
-      login = insert(:login, user: user)
 
-      assert {:ok, %AuthTokens{} = auth_tokens} = Auth.verify_login_token(login.token)
-      assert is_binary(auth_tokens.refresh_token)
-      assert is_binary(auth_tokens.access_token)
-      assert is_number(auth_tokens.access_token_expired_at)
+      assert {:ok, %AuthTokens{}} = Auth.verify_password(user.email_address, user.password)
+    end
+
+    test "throws error if password is invalid." do
+      user = insert(:user)
+
+      assert {:error, :invalid_password} =
+               Auth.verify_password(user.email_address, Faker.String.base64())
+    end
+
+    test "throws error if user registered with a Google Account." do
+      user = insert(:user_with_google_account)
+
+      assert {:error, :user_registered_with_google_account} =
+               Auth.verify_password(user.email_address, Faker.String.base64())
+    end
+
+    test "throws error if user is not registered." do
+      assert {:error, :user_not_registered} =
+               Auth.verify_password(Faker.Internet.email(), Faker.String.base64())
     end
   end
 
@@ -47,22 +70,25 @@ defmodule API.AuthTest do
       assert is_binary(auth_tokens.refresh_token)
       assert is_binary(auth_tokens.access_token)
       assert is_number(auth_tokens.access_token_expired_at)
+    end
 
-      assert %User{} =
-               user =
-               Repo.get_by(User, email_address: google_email_address)
-               |> Repo.preload([:handle_name, :logins])
+    test "throws error if user registered with password." do
+      user = insert(:user)
 
-      assert is_binary(user.handle_name.value)
-      assert Enum.empty?(user.logins)
+      expect(API.GoogleAuthMock, :verify_id_token, 1, fn _token ->
+        {:ok, build(:google_user, email_address: user.email_address)}
+      end)
+
+      assert {:error, :user_registered_with_password} =
+               Auth.verify_google_id_token(Faker.String.base64())
     end
 
     test "throws error if Google User's email address is not verified" do
       expect(API.GoogleAuthMock, :verify_id_token, 1, fn _token ->
-        {:ok, build(:google_user, email_address_verified: false)}
+        {:ok, build(:google_user, email_address_verified?: false)}
       end)
 
-      assert {:error, :google_email_not_verified} =
+      assert {:error, :google_email_address_not_verified} =
                Auth.verify_google_id_token(Faker.String.base64())
     end
   end
