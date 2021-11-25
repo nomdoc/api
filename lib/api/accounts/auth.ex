@@ -27,7 +27,7 @@ defmodule API.Auth do
     end
   end
 
-  @spec verify_password(any, any) ::
+  @spec verify_password(binary(), binary()) ::
           {:ok, AuthTokens.t()}
           | {:error,
              :invalid_password
