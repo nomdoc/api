@@ -3,6 +3,8 @@ defmodule APIWeb.OAuthController do
 
   use APIWeb, :controller
 
+  alias API.Auth
+
   action_fallback APIWeb.FallbackController
 
   def token(%Plug.Conn{} = conn, data) do
@@ -19,7 +21,7 @@ defmodule APIWeb.OAuthController do
     refresh_token_id = conn.cookies["refresh_token"]
 
     if is_binary(refresh_token_id) do
-      :ok = API.Auth.logout(refresh_token_id)
+      :ok = Auth.logout(refresh_token_id)
     end
 
     conn
@@ -28,8 +30,30 @@ defmodule APIWeb.OAuthController do
   end
 
   defp verify_password(%Plug.Conn{} = conn, data) do
-    conn
-    # TODO
+    types = %{email_address: :string, password: :string}
+    params = Map.keys(types)
+
+    {%{}, types}
+    |> cast(data, params)
+    |> validate_required(params, message: "Please fill in required fields.")
+    |> parse_string(:email_address, scrub: :all, transform: :downcase)
+    |> parse_string(:password, scrub: :all)
+    |> validate_email_address(:email_address)
+    |> case do
+      %Changeset{valid?: true} = changeset ->
+        %{email_address: email_address, password: password} = apply_changes(changeset)
+
+        # TODO recaptcha
+        # TODO rate limit
+        with {:ok, tokens} <- Auth.verify_password(email_address, password),
+             do:
+               conn
+               |> put_refresh_token_cookie(tokens.refresh_token)
+               |> render("token.json", data: tokens)
+
+      changeset ->
+        {:error, changeset}
+    end
   end
 
   defp verify_google_id_token(%Plug.Conn{} = conn, data) do
@@ -41,12 +65,12 @@ defmodule APIWeb.OAuthController do
     |> validate_required(params, message: "Please fill in required fields.")
     |> parse_string(:google_id_token, scrub: :all)
     |> case do
-      %Ecto.Changeset{valid?: true} = changeset ->
+      %Changeset{valid?: true} = changeset ->
         %{google_id_token: google_id_token} = apply_changes(changeset)
 
         # TODO recaptcha
         # TODO rate limit
-        with {:ok, tokens} <- API.Auth.verify_google_id_token(google_id_token),
+        with {:ok, tokens} <- Auth.verify_google_id_token(google_id_token),
              do:
                conn
                |> put_refresh_token_cookie(tokens.refresh_token)
@@ -64,7 +88,7 @@ defmodule APIWeb.OAuthController do
     # TODO recaptcha
     # TODO rate limit
     with :ok <- parse_uuid4(refresh_token_id),
-         {:ok, tokens} <- API.Auth.exchange_refresh_token(refresh_token_id) do
+         {:ok, tokens} <- Auth.exchange_refresh_token(refresh_token_id) do
       conn
       |> put_refresh_token_cookie(tokens.refresh_token)
       |> render("token.json", data: tokens)
