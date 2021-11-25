@@ -19,7 +19,6 @@ defmodule APIWeb.Router do
   scope "/oauth", APIWeb do
     pipe_through :rest
 
-    post "/authorize", OAuthController, :authorize
     post "/token", OAuthController, :token
     post "/revoke", OAuthController, :revoke
   end

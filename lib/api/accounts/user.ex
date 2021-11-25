@@ -11,25 +11,53 @@ defmodule API.User do
     field :new?, :boolean, virtual: true, default: false
 
     field :email_address, :string
+    field :email_address_verified?, :boolean, default: false
+    field :password, :string, virtual: true
+    field :password_hash, :string
+    field :google_account_id, :string
+
     has_one :handle_name, API.HandleName, on_replace: :update
     field :display_name, :string
     field :bio, :string
     field :gender, Gender, default: :unspecified
 
-    has_many :logins, API.Login
     has_many :refresh_tokens, API.RefreshToken
 
     timestamps()
   end
 
-  @spec changeset(t(), data) :: Changeset.t() when data: %{id: binary(), email_address: binary()}
-  def changeset(%__MODULE__{} = user, data) do
-    params = ~w(id email_address)a
+  @spec build_with_password(t(), data) :: Changeset.t()
+        when data: %{id: binary(), email_address: binary(), password: binary()}
+  def build_with_password(%__MODULE__{} = user, data) do
+    params = ~w(id email_address password)a
 
     user
     |> cast(data, params)
     |> validate_required(params)
     |> unique_constraint(:email_address)
+    |> put_password_hash()
+  end
+
+  defp put_password_hash(%Changeset{} = changeset) do
+    changes =
+      get_field(changeset, :password)
+      |> hash_password()
+      |> Map.put(:password, nil)
+
+    change(changeset, changes)
+  end
+
+  @spec build_with_google_account(t(), data) :: Changeset.t()
+        when data: %{id: binary(), email_address: binary(), google_account_id: binary()}
+  def build_with_google_account(%__MODULE__{} = user, data) do
+    params = ~w(id email_address google_account_id)a
+
+    user
+    |> cast(data, params)
+    |> validate_required(params)
+    |> unique_constraint(:email_address)
+    |> unique_constraint(:google_account_id)
+    |> put_change(:email_address_verified?, true)
   end
 
   @spec update_display_name(t(), data) :: Changeset.t() when data: %{display_name: binary()}
@@ -67,5 +95,10 @@ defmodule API.User do
     user
     |> cast(data, [])
     |> cast_assoc(:handle_name)
+  end
+
+  @spec hash_password(binary()) :: %{password_hash: binary()}
+  def hash_password(password) do
+    Argon2.add_hash(password)
   end
 end

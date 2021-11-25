@@ -5,16 +5,9 @@ defmodule APIWeb.OAuthController do
 
   action_fallback APIWeb.FallbackController
 
-  def authorize(%Plug.Conn{} = conn, data) do
-    case data["response_type"] do
-      "login_token" -> login_with_token(conn, data)
-      _reply -> {:error, :unsupported_response_type}
-    end
-  end
-
   def token(%Plug.Conn{} = conn, data) do
     case data["grant_type"] do
-      "login_token" -> verify_login_token(conn, data)
+      "password" -> verify_password(conn, data)
       "google_id_token" -> verify_google_id_token(conn, data)
       "refresh_token" -> exchange_refresh_token(conn)
       _reply -> {:error, :unsupported_grant_type}
@@ -34,52 +27,9 @@ defmodule APIWeb.OAuthController do
     |> render("revoke.json")
   end
 
-  defp login_with_token(%Plug.Conn{} = conn, data) do
-    types = %{email_address: :string}
-    params = Map.keys(types)
-
-    {%{}, types}
-    |> cast(data, params)
-    |> validate_required(params, message: "Please fill in required fields.")
-    |> parse_string(:email_address, scrub: :all, transform: :downcase)
-    |> validate_email_address(:email_address)
-    |> case do
-      %Ecto.Changeset{valid?: true} = changeset ->
-        %{email_address: email_address} = apply_changes(changeset)
-
-        # TODO recaptcha
-        # TODO rate limit
-        with {:ok, _user} <- API.Auth.login_with_token(email_address),
-             do: render(conn, "authorize.json", data: %{email_address: email_address})
-
-      changeset ->
-        {:error, changeset}
-    end
-  end
-
-  defp verify_login_token(%Plug.Conn{} = conn, data) do
-    types = %{login_token: :string}
-    params = Map.keys(types)
-
-    {%{}, types}
-    |> cast(data, params)
-    |> validate_required(params, message: "Please fill in required fields.")
-    |> parse_string(:login_token, scrub: :all)
-    |> case do
-      %Ecto.Changeset{valid?: true} = changeset ->
-        %{login_token: login_token} = apply_changes(changeset)
-
-        # TODO recaptcha
-        # TODO rate limit
-        with {:ok, tokens} <- API.Auth.verify_login_token(login_token),
-             do:
-               conn
-               |> put_refresh_token_cookie(tokens.refresh_token)
-               |> render("token.json", data: tokens)
-
-      changeset ->
-        {:error, changeset}
-    end
+  defp verify_password(%Plug.Conn{} = conn, data) do
+    conn
+    # TODO
   end
 
   defp verify_google_id_token(%Plug.Conn{} = conn, data) do

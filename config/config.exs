@@ -68,9 +68,31 @@ if config_env() == :test do
   config :api, Oban, queues: false, plugins: false
 end
 
+# See https://hexdocs.pm/argon2_elixir/Argon2.Stats.html for more
+# configurations.
+# The numbers are chosen following the guide provided in the doc.
+#
+#   ~60ms -> t_cost: 2, m_cost: 15
+#   ~115ms -> t_cost: 4, m_cost: 15
+#   ~208ms -> t_cost: 8, m_cost: 15
+#   ~307ms -> t_cost: 12, m_cost: 15
+#   ~415ms -> t_cost: 16, m_cost: 15
+#   ~460ms -> t_cost: 18, m_cost: 15
+#   ~525ms -> t_cost: 20, m_cost: 15
+#
+# 500ms is what's recommended as the most secure option. For more info, see
+# https://elixirforum.com/t/staging-environment-how-to-debug-out-of-memory-errors-in-production-on-fly-io/42763/7
+config :argon2_elixir,
+  t_cost: 18,
+  m_cost: 15
+
+if config_env() == :test do
+  config :argon2_elixir,
+    t_cost: 1,
+    m_cost: 8
+end
+
 config :api, API.Accounts,
-  # Indicates the timeframe (in seconds) which a user must complete an initiated login.
-  login_ttl: 5 * 60,
   # Indicates the timeframe (in seconds) in which the access token will remain valid.
   access_token_ttl: 30 * 60,
   # Indicates the timeframe (in seconds) after which a refresh token will be invalidated.

@@ -3,116 +3,120 @@ defmodule API.Auth do
 
   use API, :context
 
-  alias API.AccessToken
   alias API.AuthTokens
   alias API.GoogleAuth
   alias API.GoogleUser
-  alias API.Login
   alias API.RefreshToken
   alias API.User
   alias API.Users
   alias API.Utils
-  alias API.Workers.SendLoginTokenEmail
 
-  @doc """
-  Initiates a login. An email that contains the login token will be sent to the
-  email address. Login token can be verified using
-  `&API.Auth.verify_login_token/1`.
-  """
-  @spec login_with_token(binary()) :: {:ok, User.t()} | {:error, :login_failed}
-  def login_with_token(email_address) do
-    Repo.transact(fn ->
-      with {:ok, user} <- Users.get_or_create(email_address),
-           {:ok, login} <- create_login(user),
-           :ok <- SendLoginTokenEmail.schedule(email_address, login) do
-        {:ok, user}
-      else
-        _reply -> {:error, :login_failed}
-      end
-    end)
-  end
+  @spec register_with_password(binary(), binary()) ::
+          {:ok, User.t()}
+          | {:error, :user_registered_with_google_account | :user_already_registered}
+  def register_with_password(email_address, password) do
+    case Repo.get_by(User, email_address: email_address) do
+      %User{google_account_id: google_account_id} when is_binary(google_account_id) ->
+        {:error, :user_registered_with_google_account}
 
-  defp create_login(%User{} = user) do
-    %Login{}
-    |> Login.changeset(%{user_id: user.id})
-    |> Repo.insert()
-  end
+      %User{} ->
+        {:error, :user_already_registered}
 
-  @doc """
-  Verifies login token.
-  """
-  @spec verify_login_token(binary()) :: {:ok, AuthTokens.t()} | {:error, :login_failed}
-  def verify_login_token(token) do
-    with {:ok, login} <- get_login_by_token(token),
-         :ok <- enforce_login_pending(login),
-         {:ok, login} <- mark_login_completed(login),
-         user <- Repo.get!(User, login.user_id),
-         {:ok, refresh_token} <- create_refresh_token(user),
-         {:ok, access_token} <- AccessToken.new(user.id),
-         {:ok, access_token_claims} <- AccessToken.peek_claims(access_token) do
-      {:ok,
-       %AuthTokens{
-         refresh_token: refresh_token.id,
-         access_token: access_token,
-         access_token_expired_at: access_token_claims["exp"]
-       }}
-    else
-      _reply -> {:error, :login_failed}
+      nil ->
+        Users.register_user_with_password(email_address, password)
     end
   end
 
-  defp get_login_by_token(token) do
-    token_hash = Login.hash_token(token)
+  @spec verify_password(any, any) ::
+          {:ok, AuthTokens.t()}
+          | {:error,
+             :invalid_password
+             | :user_registered_with_google_account
+             | :user_not_registered}
+  def verify_password(email_address, password) do
+    case Repo.get_by(User, email_address: email_address) do
+      %User{google_account_id: google_account_id} when is_binary(google_account_id) ->
+        {:error, :user_registered_with_google_account}
 
-    case Repo.get_by(Login, token_hash: token_hash) do
-      %Login{} = login -> {:ok, login}
-      _reply -> {:error, :login_not_found}
+      nil ->
+        {:error, :user_not_registered}
+
+      %User{} = user ->
+        with :ok <- check_password(user, password),
+             {:ok, refresh_token} <- AuthTokens.create_refresh_token(user),
+             {:ok, access_token} <- AuthTokens.create_access_token(user.id),
+             {:ok, access_token_claims} <- AuthTokens.peek_access_token(access_token),
+             do:
+               {:ok,
+                %AuthTokens{
+                  refresh_token: refresh_token.id,
+                  access_token: access_token,
+                  access_token_expired_at: access_token_claims["exp"]
+                }}
     end
   end
 
-  defp enforce_login_pending(%Login{} = login) do
-    case login do
-      %Login{status: :pending} -> :ok
-      _reply -> {:error, :invalid_login}
+  defp check_password(%User{} = user, password) do
+    case Argon2.check_pass(user, password) do
+      {:ok, _user} -> :ok
+      _reply -> {:error, :invalid_password}
     end
-  end
-
-  defp mark_login_completed(%Login{} = login) do
-    updated_login =
-      login
-      |> Login.mark_completed()
-      |> Repo.update!()
-
-    {:ok, updated_login}
   end
 
   @doc """
   Verifies Google ID token.
   """
   @spec verify_google_id_token(binary()) ::
-          {:ok, AuthTokens.t()} | {:error, :google_email_not_verified | :login_failed}
+          {:ok, AuthTokens.t()}
+          | {:error, :user_registered_with_password | :google_email_address_not_verified}
   def verify_google_id_token(token) do
     Repo.transact(fn ->
       google_auth_service = GoogleAuth.get_service()
 
       # vNext track token? limit to one-use only.
-      with {:ok, %GoogleUser{email_address_verified: true} = google_user} <-
-             google_auth_service.verify_id_token(token),
-           {:ok, user} <- Users.get_or_create(google_user.email_address),
-           {:ok, refresh_token} <- create_refresh_token(user),
-           {:ok, access_token} <- AccessToken.new(user.id),
-           {:ok, access_token_claims} <- AccessToken.peek_claims(access_token) do
-        {:ok,
-         %AuthTokens{
-           refresh_token: refresh_token.id,
-           access_token: access_token,
-           access_token_expired_at: access_token_claims["exp"]
-         }}
-      else
-        {:ok, %GoogleUser{}} -> {:error, :google_email_not_verified}
-        _reply -> {:error, :login_failed}
+      with {:ok, %GoogleUser{} = google_user} <- google_auth_service.verify_id_token(token),
+           :ok <- ensure_google_user_email_verified(google_user) do
+        case Users.get_user(google_user.email_address, google_user.id) do
+          {:ok, %User{password_hash: password_hash}} when is_binary(password_hash) ->
+            {:error, :user_registered_with_password}
+
+          {:ok, %User{} = user} ->
+            with {:ok, refresh_token} <- AuthTokens.create_refresh_token(user),
+                 {:ok, access_token} <- AuthTokens.create_access_token(user.id),
+                 {:ok, access_token_claims} <- AuthTokens.peek_access_token(access_token),
+                 do:
+                   {:ok,
+                    %AuthTokens{
+                      refresh_token: refresh_token.id,
+                      access_token: access_token,
+                      access_token_expired_at: access_token_claims["exp"]
+                    }}
+
+          {:error, :user_not_found} ->
+            with {:ok, user} <-
+                   Users.register_user_with_google_account(
+                     google_user.email_address,
+                     google_user.id
+                   ),
+                 {:ok, refresh_token} <- AuthTokens.create_refresh_token(user),
+                 {:ok, access_token} <- AuthTokens.create_access_token(user.id),
+                 {:ok, access_token_claims} <- AuthTokens.peek_access_token(access_token),
+                 do:
+                   {:ok,
+                    %AuthTokens{
+                      refresh_token: refresh_token.id,
+                      access_token: access_token,
+                      access_token_expired_at: access_token_claims["exp"]
+                    }}
+        end
       end
     end)
+  end
+
+  defp ensure_google_user_email_verified(%GoogleUser{} = google_user) do
+    if google_user.email_address_verified?,
+      do: :ok,
+      else: {:error, :google_email_address_not_verified}
   end
 
   @doc """
@@ -122,10 +126,10 @@ defmodule API.Auth do
           {:ok, AuthTokens.t()} | {:error, :invalid_refresh_token}
   def exchange_refresh_token(refresh_token_id) do
     with {:ok, refresh_token} <- get_and_validate_refresh_token(refresh_token_id),
-         :ok <- invalidate_refresh_token(refresh_token),
-         {:ok, new_refresh_token} <- renew_refresh_token(refresh_token),
-         {:ok, access_token} <- AccessToken.new(new_refresh_token.user_id),
-         {:ok, access_token_claims} <- AccessToken.peek_claims(access_token) do
+         :ok <- AuthTokens.invalidate_refresh_token(refresh_token),
+         {:ok, new_refresh_token} <- AuthTokens.renew_refresh_token(refresh_token),
+         {:ok, access_token} <- AuthTokens.create_access_token(new_refresh_token.user_id),
+         {:ok, access_token_claims} <- AuthTokens.peek_access_token(access_token) do
       {:ok,
        %AuthTokens{
          refresh_token: new_refresh_token.id,
@@ -141,7 +145,7 @@ defmodule API.Auth do
     case Repo.get(RefreshToken, refresh_token_id) do
       %RefreshToken{status: :valid} = refresh_token ->
         if Utils.expired?(refresh_token.absolute_timeout_at) do
-          :ok = invalidate_refresh_token(refresh_token)
+          :ok = AuthTokens.invalidate_refresh_token(refresh_token)
 
           {:error, :refresh_token_timed_out}
         else
@@ -158,21 +162,12 @@ defmodule API.Auth do
     end
   end
 
-  defp renew_refresh_token(%RefreshToken{} = refresh_token) do
-    new_refresh_token =
-      %RefreshToken{}
-      |> RefreshToken.renew(refresh_token)
-      |> Repo.insert!()
-
-    {:ok, new_refresh_token}
-  end
-
   @doc """
   Verifies an access token and fetches the user.
   """
   @spec debug_access_token(binary()) :: {:ok, User.t()} | {:error, :invalid_access_token}
   def debug_access_token(access_token) do
-    with {:ok, claims} <- AccessToken.verify(access_token) do
+    with {:ok, claims} <- AuthTokens.verify_access_token(access_token) do
       user_id = Map.get(claims, "sub") || raise KeyError, key: "sub", term: claims
 
       case Repo.get(User, user_id) do
@@ -191,23 +186,6 @@ defmodule API.Auth do
       RefreshToken.get_by_id(refresh_token_id),
       set: [status: :invalidated, updated_at: DateTime.utc_now()]
     )
-
-    :ok
-  end
-
-  defp create_refresh_token(%User{id: user_id}) do
-    refresh_token =
-      %RefreshToken{}
-      |> RefreshToken.changeset(%{user_id: user_id})
-      |> Repo.insert!()
-
-    {:ok, refresh_token}
-  end
-
-  defp invalidate_refresh_token(%RefreshToken{} = refresh_token) do
-    refresh_token
-    |> RefreshToken.invalidate()
-    |> Repo.update!()
 
     :ok
   end
