@@ -105,6 +105,7 @@ end
 config :api, API.Mailer, service: API.MailerPostmark
 config :api, API.GoogleAuth, service: API.GoogleAuthHttp
 config :api, API.Recaptcha, service: API.RecaptchaHttp
+config :api, API.Pwned, impl: API.PwnedHttp
 
 # For testing, we use service mocks as defined in test_helper.exs
 if config_env() == :test do
