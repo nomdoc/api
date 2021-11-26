@@ -16,6 +16,7 @@ defmodule API do
 
       # Modules
       Pwned,
+      RateLimiter,
       Regex,
       Repo,
       Utils
