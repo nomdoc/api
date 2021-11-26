@@ -55,3 +55,7 @@ api-\*.tar
 # Misc.
 
 .DS_Store
+
+# Redis' dump
+
+dump.rdb

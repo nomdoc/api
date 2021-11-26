@@ -55,9 +55,8 @@ defmodule API.MixProject do
       {:gettext, "~> 0.18.2"},
       # TODO merge PR into main
       {:google_certs, git: "https://github.com/sammkj/google-certs", branch: "sdc/envs"},
-      # TODO merge PR then use sammkj/hammer
-      # {:hammer, "~> 6.0.0"},
-      # {:hammer_backend_redis, "~> 6.1.0"},
+      {:hammer, "~> 6.0.0"},
+      {:hammer_backend_redis, "~> 6.1.0"},
       {:jason, "~> 1.2.2"},
       {:joken, "~> 2.4.1"},
       {:nanoid, "~> 2.0.5"},
