@@ -29,17 +29,23 @@ defmodule API.Recaptcha do
   - `site_key`: Google reCAPTCHA Enterprise key.
   """
 
-  @spec get_service() :: module()
-  def get_service() do
-    Application.fetch_env!(:api, API.Recaptcha)[:service]
+  @behaviour API.RecaptchaProvider
+
+  @spec check_assessment(binary(), binary()) :: :ok | {:error, :failed_recaptcha}
+  def check_assessment(token, expected_action) do
+    impl().check_assessment(token, expected_action)
   end
 
-  @spec get_config() :: %{api_key: binary(), project_id: binary(), site_key: binary()}
-  def get_config() do
+  @spec config() :: %{api_key: binary(), project_id: binary(), site_key: binary()}
+  def config() do
     %{
       project_id: Application.fetch_env!(:api, API.Recaptcha)[:project_id],
       api_key: Application.fetch_env!(:api, API.Recaptcha)[:api_key],
       site_key: Application.fetch_env!(:api, API.Recaptcha)[:site_key]
     }
+  end
+
+  defp impl() do
+    Application.fetch_env!(:api, API.Recaptcha)[:impl]
   end
 end
