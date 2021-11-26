@@ -53,8 +53,6 @@ defmodule API.MixProject do
       {:elixir_uuid, "~> 1.2.1"},
       {:email_checker, "~> 0.2.1"},
       {:gettext, "~> 0.18.2"},
-      # TODO merge PR into main
-      {:google_certs, git: "https://github.com/sammkj/google-certs", branch: "sdc/envs"},
       {:hammer, "~> 6.0.0"},
       {:hammer_backend_redis, "~> 6.1.0"},
       {:jason, "~> 1.2.2"},

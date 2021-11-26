@@ -14,15 +14,6 @@ defmodule API.Factory do
     }
   end
 
-  def user_with_google_account_factory() do
-    %API.User{
-      email_address: Faker.Internet.email(),
-      email_address_verified?: true,
-      google_account_id: Faker.String.base64(),
-      handle_name: build(:handle_name)
-    }
-  end
-
   def handle_name_factory() do
     %API.HandleName{
       value: API.HandleName.generate_value()
@@ -33,15 +24,6 @@ defmodule API.Factory do
     %API.RefreshToken{
       user: build(:user),
       absolute_timeout_at: API.RefreshToken.generate_absolute_timeout_at()
-    }
-  end
-
-  def google_user_factory() do
-    %API.GoogleUser{
-      id: Faker.UUID.v4(),
-      email_address: Faker.Internet.email(),
-      email_address_verified?: true,
-      name: Faker.Person.name()
     }
   end
 end

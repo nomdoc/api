@@ -22,8 +22,6 @@ google_project_id = env!("GOOGLE_PROJECT_ID", :string!)
 google_recaptcha_api_key = env!("GOOGLE_RECAPTCHA_API_KEY", :string!)
 google_recaptcha_site_key = env!("GOOGLE_RECAPTCHA_SITE_KEY", :string!)
 
-google_oauth_client_id = env!("GOOGLE_OAUTH_CLIENT_ID", :string!)
-
 config :api, APIWeb.Endpoint,
   url: [
     host: host,
@@ -70,5 +68,3 @@ config :api, API.Recaptcha,
   project_id: google_project_id,
   api_key: google_recaptcha_api_key,
   site_key: google_recaptcha_site_key
-
-config :api, API.GoogleAuth, client_id: google_oauth_client_id

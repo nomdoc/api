@@ -10,7 +10,6 @@ defmodule APIWeb.OAuthController do
   def token(%Plug.Conn{} = conn, data) do
     case data["grant_type"] do
       "password" -> verify_password(conn, data)
-      "google_id_token" -> verify_google_id_token(conn, data)
       "refresh_token" -> exchange_refresh_token(conn)
       _reply -> {:error, :unsupported_grant_type}
     end
@@ -46,31 +45,6 @@ defmodule APIWeb.OAuthController do
         # TODO recaptcha
         # TODO rate limit
         with {:ok, tokens} <- Auth.verify_password(email_address, password),
-             do:
-               conn
-               |> put_refresh_token_cookie(tokens.refresh_token)
-               |> render("token.json", data: tokens)
-
-      changeset ->
-        {:error, changeset}
-    end
-  end
-
-  defp verify_google_id_token(%Plug.Conn{} = conn, data) do
-    types = %{google_id_token: :string}
-    params = Map.keys(types)
-
-    {%{}, types}
-    |> cast(data, params)
-    |> validate_required(params, message: "Please fill in required fields.")
-    |> parse_string(:google_id_token, scrub: :all)
-    |> case do
-      %Changeset{valid?: true} = changeset ->
-        %{google_id_token: google_id_token} = apply_changes(changeset)
-
-        # TODO recaptcha
-        # TODO rate limit
-        with {:ok, tokens} <- Auth.verify_google_id_token(google_id_token),
              do:
                conn
                |> put_refresh_token_cookie(tokens.refresh_token)

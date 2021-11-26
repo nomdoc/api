@@ -16,8 +16,7 @@ defmodule APIApplication do
       APIWeb.Endpoint,
       # Start a worker by calling: API.Worker.start_link(arg)
       # {API.Worker, arg}
-      {Oban, Application.fetch_env!(:api, Oban)},
-      GoogleCerts.CertificateCache
+      {Oban, Application.fetch_env!(:api, Oban)}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

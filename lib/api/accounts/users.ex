@@ -21,34 +21,10 @@ defmodule API.Users do
     data = %{id: user_id, email_address: email_address, password: password}
 
     %User{}
-    |> User.build_with_password(data)
+    |> User.changeset(data)
     |> Repo.insert!(on_conflict: :nothing, conflict_target: :email_address)
 
     user = Repo.get_by!(User, email_address: email_address)
-
-    {:ok, Map.put(user, :new?, user.id == user_id)}
-  end
-
-  @doc """
-  Registers a user with Google Account. If a user with email address and/or
-  Google Account ID already exists, it will return the user.
-  """
-  @spec register_user_with_google_account(binary(), binary()) :: {:ok, User.t()}
-  def register_user_with_google_account(email_address, google_account_id) do
-    with {:ok, user} <- maybe_create_user_with_google_account(email_address, google_account_id),
-         :ok <- maybe_create_handle_name(user),
-         do: {:ok, user}
-  end
-
-  defp maybe_create_user_with_google_account(email_address, google_account_id) do
-    user_id = Ecto.UUID.generate()
-    data = %{id: user_id, email_address: email_address, google_account_id: google_account_id}
-
-    %User{}
-    |> User.build_with_google_account(data)
-    |> Repo.insert!(on_conflict: :nothing)
-
-    {:ok, user} = get_user(email_address, google_account_id)
 
     {:ok, Map.put(user, :new?, user.id == user_id)}
   end
@@ -67,32 +43,6 @@ defmodule API.Users do
 
       %User{} ->
         :ok
-    end
-  end
-
-  @spec get_user(binary(), binary()) :: {:ok, User.t()} | {:error, :user_not_found}
-  def get_user(email_address, google_account_id) do
-    User
-    |> filter_email_address(email_address)
-    |> filter_google_account_id(google_account_id)
-    |> Repo.one()
-    |> case do
-      %User{} = user -> {:ok, user}
-      nil -> {:error, :user_not_found}
-    end
-  end
-
-  defp filter_email_address(query, email_address) do
-    case email_address do
-      nil -> query
-      email_address -> or_where(query, [u], u.email_address == ^email_address)
-    end
-  end
-
-  defp filter_google_account_id(query, google_account_id) do
-    case google_account_id do
-      nil -> query
-      google_account_id -> or_where(query, [u], u.google_account_id == ^google_account_id)
     end
   end
 

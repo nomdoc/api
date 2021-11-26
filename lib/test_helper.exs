@@ -1,5 +1,4 @@
 Mox.defmock(API.MailerMock, for: API.MailerProvider)
-Mox.defmock(API.GoogleAuthMock, for: API.GoogleAuthProvider)
 Mox.defmock(API.RecaptchaMock, for: API.RecaptchaProvider)
 Mox.defmock(API.PwnedMock, for: API.PwnedProvider)
 Mox.defmock(API.RateLimiterMock, for: API.RateLimiterProvider)
