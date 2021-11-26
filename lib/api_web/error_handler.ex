@@ -105,6 +105,9 @@ defmodule APIWeb.ErrorHandler do
       :invalid_json ->
         {400, "Invalid JSON."}
 
+      :failed_recaptcha ->
+        {422, "Something went wrong. Please try again later."}
+
       :user_already_registered ->
         {422, "You have already registered. Please proceed to login."}
 
