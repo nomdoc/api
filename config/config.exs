@@ -106,10 +106,13 @@ config :api, API.Mailer, service: API.MailerPostmark
 config :api, API.GoogleAuth, impl: API.GoogleAuthHttp
 config :api, API.Recaptcha, service: API.RecaptchaHttp
 config :api, API.Pwned, impl: API.PwnedHttp
+config :api, API.RateLimiter, impl: API.RateLimiterHammer
 
 # For testing, we use service mocks as defined in test_helper.exs
 if config_env() == :test do
   config :api, API.Mailer, service: API.MailerMock
   config :api, API.GoogleAuth, impl: API.GoogleAuthMock
   config :api, API.Recaptcha, service: API.RecaptchaMock
+  config :api, API.Pwned, impl: API.PwnedMock
+  config :api, API.RateLimiter, impl: API.RateLimiterMock
 end

@@ -8,6 +8,7 @@ end
 
 database_url = env!("DATABASE_URL", :string!)
 database_pool_size = env!("DATABASE_POOL_SIZE", :integer!)
+redis_url = env!("REDIS_URL", :string!)
 port = env!("PORT", :integer!)
 host = env!("HOST", :string!)
 host_port = env!("HOST_PORT", :integer!)
@@ -52,6 +53,14 @@ else
     hostname: "localhost",
     pool: Ecto.Adapters.SQL.Sandbox
 end
+
+config :hammer,
+  backend:
+    {Hammer.Backend.Redis,
+     [
+       expiry_ms: 5 * 60 * 1_000,
+       redis_url: [url: redis_url]
+     ]}
 
 config :api, API.Accounts,
   login_token_hash_key: login_token_hash_key,
