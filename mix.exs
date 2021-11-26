@@ -64,6 +64,7 @@ defmodule API.MixProject do
       {:phoenix_ecto, "~> 4.4.0"},
       {:plug_cowboy, "~> 2.5.2"},
       {:postgrex, ">= 0.0.0"},
+      {:remote_ip, "~> 1.0.0"},
       {:req, "~> 0.2.1"},
       {:telemetry, "~> 1.0.0", override: true},
       {:telemetry_metrics, "~> 0.6.1"},
