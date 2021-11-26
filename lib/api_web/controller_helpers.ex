@@ -8,6 +8,6 @@ defmodule APIWeb.ControllerHelpers do
 
   @spec password_invalid_message() :: binary()
   def password_invalid_message() do
-    "Password must contain at least one lowercase alphabet, one uppercase alphabet, one number and one special charater."
+    "Password must contain at least 12 characters, one lowercase alphabet, one uppercase alphabet, one number and one special character."
   end
 end
