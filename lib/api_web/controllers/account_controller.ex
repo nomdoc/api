@@ -36,14 +36,4 @@ defmodule APIWeb.AccountController do
         {:error, changeset}
     end
   end
-
-  def update_password(%Plug.Conn{} = conn, data) do
-    conn
-    # TODO
-  end
-
-  def reset_password(%Plug.Conn{} = conn, data) do
-    conn
-    # TODO
-  end
 end
