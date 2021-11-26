@@ -32,6 +32,7 @@ defmodule APIWeb.Endpoint do
 
   plug Plug.MethodOverride
   plug Plug.Head
+  plug RemoteIp
   plug APIWeb.CorsPlug
   plug APIWeb.HeaderPlug
   plug APIWeb.Router
