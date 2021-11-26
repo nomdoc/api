@@ -14,7 +14,6 @@ defmodule API.User do
     field :email_address_verified?, :boolean, default: false
     field :password, :string, virtual: true
     field :password_hash, :string
-    field :google_account_id, :string
 
     has_one :handle_name, API.HandleName, on_replace: :update
     field :display_name, :string
@@ -26,9 +25,9 @@ defmodule API.User do
     timestamps()
   end
 
-  @spec build_with_password(t(), data) :: Changeset.t()
+  @spec changeset(t(), data) :: Changeset.t()
         when data: %{id: binary(), email_address: binary(), password: binary()}
-  def build_with_password(%__MODULE__{} = user, data) do
+  def changeset(%__MODULE__{} = user, data) do
     params = ~w(id email_address password)a
 
     user
@@ -45,19 +44,6 @@ defmodule API.User do
       |> Map.put(:password, nil)
 
     change(changeset, changes)
-  end
-
-  @spec build_with_google_account(t(), data) :: Changeset.t()
-        when data: %{id: binary(), email_address: binary(), google_account_id: binary()}
-  def build_with_google_account(%__MODULE__{} = user, data) do
-    params = ~w(id email_address google_account_id)a
-
-    user
-    |> cast(data, params)
-    |> validate_required(params)
-    |> unique_constraint(:email_address)
-    |> unique_constraint(:google_account_id)
-    |> put_change(:email_address_verified?, true)
   end
 
   @spec update_display_name(t(), data) :: Changeset.t() when data: %{display_name: binary()}

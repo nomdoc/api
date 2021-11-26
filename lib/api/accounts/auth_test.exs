@@ -14,13 +14,6 @@ defmodule API.AuthTest do
                Auth.register_with_password(Faker.Internet.email(), Faker.String.base64())
     end
 
-    test "throws error if user already registered with a Google Account." do
-      user = insert(:user_with_google_account)
-
-      assert {:error, :user_registered_with_google_account} =
-               Auth.register_with_password(user.email_address, Faker.String.base64())
-    end
-
     test "throws error if user already registered." do
       user = insert(:user)
 
@@ -43,53 +36,9 @@ defmodule API.AuthTest do
                Auth.verify_password(user.email_address, Faker.String.base64())
     end
 
-    test "throws error if user registered with a Google Account." do
-      user = insert(:user_with_google_account)
-
-      assert {:error, :user_registered_with_google_account} =
-               Auth.verify_password(user.email_address, Faker.String.base64())
-    end
-
     test "throws error if user is not registered." do
       assert {:error, :user_not_registered} =
                Auth.verify_password(Faker.Internet.email(), Faker.String.base64())
-    end
-  end
-
-  describe "verify_google_id_token/1" do
-    test "validates Google ID token, creates a new user if not registered and returns auth tokens." do
-      google_email_address = "example@gmail.com"
-
-      expect(API.GoogleAuthMock, :verify_id_token, 1, fn _token ->
-        {:ok, build(:google_user, email_address: google_email_address)}
-      end)
-
-      assert {:ok, %AuthTokens{} = auth_tokens} =
-               Auth.verify_google_id_token(Faker.String.base64())
-
-      assert is_binary(auth_tokens.refresh_token)
-      assert is_binary(auth_tokens.access_token)
-      assert is_number(auth_tokens.access_token_expired_at)
-    end
-
-    test "throws error if user registered with password." do
-      user = insert(:user)
-
-      expect(API.GoogleAuthMock, :verify_id_token, 1, fn _token ->
-        {:ok, build(:google_user, email_address: user.email_address)}
-      end)
-
-      assert {:error, :user_registered_with_password} =
-               Auth.verify_google_id_token(Faker.String.base64())
-    end
-
-    test "throws error if Google User's email address is not verified" do
-      expect(API.GoogleAuthMock, :verify_id_token, 1, fn _token ->
-        {:ok, build(:google_user, email_address_verified?: false)}
-      end)
-
-      assert {:error, :google_email_address_not_verified} =
-               Auth.verify_google_id_token(Faker.String.base64())
     end
   end
 

@@ -4,21 +4,15 @@ defmodule API.Auth do
   use API, :context
 
   alias API.AuthTokens
-  alias API.GoogleAuth
-  alias API.GoogleUser
   alias API.RefreshToken
   alias API.User
   alias API.Users
   alias API.Utils
 
   @spec register_with_password(binary(), binary()) ::
-          {:ok, User.t()}
-          | {:error, :user_registered_with_google_account | :user_already_registered}
+          {:ok, User.t()} | {:error, :user_already_registered}
   def register_with_password(email_address, password) do
     case Repo.get_by(User, email_address: email_address) do
-      %User{google_account_id: google_account_id} when is_binary(google_account_id) ->
-        {:error, :user_registered_with_google_account}
-
       %User{} ->
         {:error, :user_already_registered}
 
@@ -31,13 +25,9 @@ defmodule API.Auth do
           {:ok, AuthTokens.t()}
           | {:error,
              :invalid_password
-             | :user_registered_with_google_account
              | :user_not_registered}
   def verify_password(email_address, password) do
     case Repo.get_by(User, email_address: email_address) do
-      %User{google_account_id: google_account_id} when is_binary(google_account_id) ->
-        {:error, :user_registered_with_google_account}
-
       nil ->
         {:error, :user_not_registered}
 
@@ -61,60 +51,6 @@ defmodule API.Auth do
       {:ok, _user} -> :ok
       _reply -> {:error, :invalid_password}
     end
-  end
-
-  @doc """
-  Verifies Google ID token.
-  """
-  @spec verify_google_id_token(binary()) ::
-          {:ok, AuthTokens.t()}
-          | {:error, :user_registered_with_password | :google_email_address_not_verified}
-  def verify_google_id_token(token) do
-    Repo.transact(fn ->
-      # vNext track token? limit to one-use only.
-      with {:ok, %GoogleUser{} = google_user} <- GoogleAuth.verify_id_token(token),
-           :ok <- ensure_google_user_email_verified(google_user) do
-        case Users.get_user(google_user.email_address, google_user.id) do
-          {:ok, %User{password_hash: password_hash}} when is_binary(password_hash) ->
-            {:error, :user_registered_with_password}
-
-          {:ok, %User{} = user} ->
-            with {:ok, refresh_token} <- AuthTokens.create_refresh_token(user),
-                 {:ok, access_token} <- AuthTokens.create_access_token(user.id),
-                 {:ok, access_token_claims} <- AuthTokens.peek_access_token(access_token),
-                 do:
-                   {:ok,
-                    %AuthTokens{
-                      refresh_token: refresh_token.id,
-                      access_token: access_token,
-                      access_token_expired_at: access_token_claims["exp"]
-                    }}
-
-          {:error, :user_not_found} ->
-            with {:ok, user} <-
-                   Users.register_user_with_google_account(
-                     google_user.email_address,
-                     google_user.id
-                   ),
-                 {:ok, refresh_token} <- AuthTokens.create_refresh_token(user),
-                 {:ok, access_token} <- AuthTokens.create_access_token(user.id),
-                 {:ok, access_token_claims} <- AuthTokens.peek_access_token(access_token),
-                 do:
-                   {:ok,
-                    %AuthTokens{
-                      refresh_token: refresh_token.id,
-                      access_token: access_token,
-                      access_token_expired_at: access_token_claims["exp"]
-                    }}
-        end
-      end
-    end)
-  end
-
-  defp ensure_google_user_email_verified(%GoogleUser{} = google_user) do
-    if google_user.email_address_verified?,
-      do: :ok,
-      else: {:error, :google_email_address_not_verified}
   end
 
   @doc """
