@@ -1,20 +1,36 @@
 defmodule API.RecaptchaHttp do
   @moduledoc false
 
+  @behaviour API.RecaptchaProvider
+
   alias API.Recaptcha
 
   require Logger
 
   @base_url "https://recaptchaenterprise.googleapis.com"
 
-  @doc """
-  Create an assessment for reCAPTCHA response.
+  @spec check_assessment(binary(), binary()) :: :ok | {:error, :failed_recaptcha}
+  def check_assessment(token, expected_action) do
+    case create_assessment(token, expected_action) do
+      {:ok, %Req.Response{body: assessment}} ->
+        # Only 0.1, 0.3, 0.7 and 0.9 score levels are available
+        # https://cloud.google.com/recaptcha-enterprise/docs/interpret-assessment#interpret_scores
+        score = assessment["score"]
+        action = assessment["tokenProperties"]["action"]
+        valid? = assessment["tokenProperties"]["valid"]
 
-  For more info, https://cloud.google.com/recaptcha-enterprise/docs/create-assessment
-  """
-  @spec create_assessment(binary(), binary()) :: {:ok, Finch.Response.t()} | {:error, term()}
-  def create_assessment(token, expected_action) do
-    config = Recaptcha.get_config()
+        if valid? and score >= 0.7 and action == expected_action,
+          do: :ok,
+          else: {:error, :failed_recaptcha}
+
+      _reply ->
+        {:error, :failed_recaptcha}
+    end
+  end
+
+  # For more info, https://cloud.google.com/recaptcha-enterprise/docs/create-assessment
+  defp create_assessment(token, expected_action) do
+    config = Recaptcha.config()
 
     base_uri = Path.join([@base_url, "v1beta1", "projects", config.project_id, "assessments"])
     query = URI.encode_query(%{key: config.api_key})
@@ -27,10 +43,6 @@ defmodule API.RecaptchaHttp do
       )
 
     build_and_run_request(:post, uri, body: {:json, data})
-
-    # TODO must check expectedAction vs tokenProperties.action
-    # TODO must make sure score passes threshold
-    # TODO handle other error
   end
 
   defp build_and_run_request(method, uri, options) do
