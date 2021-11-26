@@ -9,7 +9,7 @@ defmodule API.PwnedHttp do
   @weakness_threshold 1
   @timeout 500
 
-  @spec password_breached?(String.t()) :: boolean
+  @spec password_breached?(binary()) :: boolean()
   def password_breached?(string_password) do
     string_password
     |> hash_password()
