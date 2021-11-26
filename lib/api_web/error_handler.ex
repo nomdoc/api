@@ -75,19 +75,50 @@ defmodule APIWeb.ErrorHandler do
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
   defp metadata(code) do
     case code do
-      :bad_request -> {400, "Bad request."}
-      :unauthenticated -> {401, "Please login to continue"}
-      :unauthorized -> {403, "Please make sure you have sufficient permissions."}
-      :not_found -> {404, "Resource not found."}
-      :unknown -> {500, :internal_server_error, "Internal server error."}
-      :internal_server_error -> {500, "Internal server error"}
-      :invalid_pagination_cursor -> {422, "Unable to decode pagination cursor."}
-      :unsupported_response_type -> {422, "Please provide valid response type."}
-      :unsupported_grant_type -> {422, "Please provide valid grant type."}
-      :invalid_json -> {400, "Invalid JSON."}
-      :user_already_registered -> {422, "You have already registered. Please proceed to login."}
-      :account_not_found -> {404, "Unable to find account."}
-      reply -> handle_unhandled_code(reply)
+      :bad_request ->
+        {400, "Bad request."}
+
+      :unauthenticated ->
+        {401, "Please login to continue"}
+
+      :unauthorized ->
+        {403, "Please make sure you have sufficient permissions."}
+
+      :not_found ->
+        {404, "Resource not found."}
+
+      :unknown ->
+        {500, :internal_server_error, "Internal server error."}
+
+      :internal_server_error ->
+        {500, "Internal server error"}
+
+      :invalid_pagination_cursor ->
+        {422, "Unable to decode pagination cursor."}
+
+      :unsupported_response_type ->
+        {422, "Please provide valid response type."}
+
+      :unsupported_grant_type ->
+        {422, "Please provide valid grant type."}
+
+      :invalid_json ->
+        {400, "Invalid JSON."}
+
+      :user_already_registered ->
+        {422, "You have already registered. Please proceed to login."}
+
+      :user_not_registered ->
+        {422, :incorrect_email_address_or_password, "Incorrect email address or password."}
+
+      :invalid_password ->
+        {422, :incorrect_email_address_or_password, "Incorrect email address or password."}
+
+      :account_not_found ->
+        {404, "Unable to find account."}
+
+      reply ->
+        handle_unhandled_code(reply)
     end
   end
 
