@@ -29,6 +29,7 @@ defmodule APIWeb do
       import API.Utils
       import APIWeb.ControllerHelpers
 
+      # credo:disable-for-next-line Credo.Check.Readability.AliasAs
       alias APIWeb.Router.Helpers, as: Routes
       alias Ecto.Changeset
     end
@@ -94,6 +95,7 @@ defmodule APIWeb do
 
       import APIWeb.ErrorHelpers
       import APIWeb.Gettext
+      # credo:disable-for-next-line Credo.Check.Readability.AliasAs
       alias APIWeb.Router.Helpers, as: Routes
     end
   end

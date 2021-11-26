@@ -46,7 +46,7 @@ defmodule API.PwnedHttp do
     |> Enum.map(&String.split(&1, ":"))
     |> Enum.find_value("0", fn
       [^remainder, occurrences] -> occurrences
-      _ -> nil
+      _hash -> nil
     end)
     |> String.to_integer()
   end

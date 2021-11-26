@@ -24,6 +24,7 @@ defmodule APIWeb.ConnCase do
       import Phoenix.ConnTest
       import APIWeb.ConnCase
 
+      # credo:disable-for-next-line Credo.Check.Readability.AliasAs
       alias APIWeb.Router.Helpers, as: Routes
 
       # The default endpoint for testing

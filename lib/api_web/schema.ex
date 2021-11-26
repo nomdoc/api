@@ -38,6 +38,7 @@ defmodule APIWeb.Schema do
 
   @impl Absinthe.Schema
   def middleware(middleware, _field, _object) do
+    # credo:disable-for-next-line Credo.Check.Refactor.AppendSingleItem
     middleware ++ [APIWeb.NormalizeErrorMiddleware]
   end
 end
