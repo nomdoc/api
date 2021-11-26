@@ -5,6 +5,7 @@ on: [pull_request]
 env:
   DATABASE_URL: ${{secrets.DATABASE_URL }}
   DATABASE_POOL_SIZE: ${{secrets.DATABASE_POOL_SIZE}}
+  REDIS_URL: ${{secrets.REDIS_URL}}
   PORT: ${{secrets.PORT}}
   HOST: ${{secrets.HOST}}
   HOST_PORT: ${{secrets.HOST_PORT}}
