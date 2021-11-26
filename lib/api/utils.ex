@@ -116,7 +116,7 @@ defmodule API.Utils do
 
   ## Examples
 
-      validate_assertion(changeset, :password, &password_breached?/1)
+      validate_refutation(changeset, :password, &password_breached?/1)
   """
   @spec validate_refutation(Changeset.t(), atom(), (any() -> boolean()), opts) :: Changeset.t()
         when opts: [message: binary()]
