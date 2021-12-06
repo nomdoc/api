@@ -32,6 +32,7 @@ defmodule API do
       import Ecto.Query
       import EctoEnum
 
+      alias API.Repo
       alias Ecto.Changeset
 
       @primary_key {:id, :binary_id, autogenerate: true}

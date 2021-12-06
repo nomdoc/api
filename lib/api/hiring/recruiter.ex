@@ -23,4 +23,26 @@ defmodule API.Recruiter do
     |> validate_required(params)
     |> unique_constraint(:entity_id)
   end
+
+  @spec draft_job(t(), job_details) :: Changeset.t()
+        when job_details: %{
+               id: binary(),
+               employment_type: Job.EmploymentType.t(),
+               title: binary()
+             }
+  def draft_job(%__MODULE__{} = recruiter, job_details) do
+    recruiter = Repo.preload(recruiter, [:jobs])
+    job = Map.put(job_details, :recruiter_id, recruiter.id)
+
+    data = %{
+      jobs:
+        recruiter.jobs
+        |> Enum.map(&convert_struct_to_map/1)
+        |> Enum.concat([job])
+    }
+
+    recruiter
+    |> cast(data, [])
+    |> cast_assoc(:jobs)
+  end
 end

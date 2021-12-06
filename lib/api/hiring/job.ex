@@ -47,9 +47,14 @@ defmodule API.Job do
   end
 
   @spec changeset(t(), data) :: Changeset.t()
-        when data: %{recruiter_id: binary(), employment_type: EmploymentType.t()}
+        when data: %{
+               id: binary(),
+               recruiter_id: binary(),
+               employment_type: EmploymentType.t(),
+               title: binary()
+             }
   def changeset(%__MODULE__{} = job, data) do
-    params = ~w(recruiter_id employment_type)a
+    params = ~w(id recruiter_id employment_type title)a
 
     job
     |> cast(data, params)

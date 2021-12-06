@@ -15,7 +15,7 @@ defmodule API.Recruiters do
     end
   end
 
-  defp maybe_create_recruiter(entity_id) do
+  defp maybe_create_recruiter(entity_id, preloads \\ []) do
     recruiter_id = Ecto.UUID.generate()
     data = %{id: recruiter_id, entity_id: entity_id}
 
@@ -23,7 +23,9 @@ defmodule API.Recruiters do
     |> Recruiter.changeset(data)
     |> Repo.insert!(on_conflict: :nothing)
 
-    recruiter = Repo.get_by!(Recruiter, entity_id: entity_id)
+    recruiter =
+      Repo.get_by!(Recruiter, entity_id: entity_id)
+      |> Repo.preload(preloads)
 
     {:ok, Map.put(recruiter, :new?, recruiter.id == recruiter_id)}
   end
