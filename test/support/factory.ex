@@ -36,7 +36,7 @@ defmodule API.Factory do
   def job_factory() do
     %API.Job{
       recruiter: build(:recruiter),
-      employment_type: :part_time,
+      employment_type: :locum,
       title: Faker.Lorem.sentence(3..5)
     }
   end

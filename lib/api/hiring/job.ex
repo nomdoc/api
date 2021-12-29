@@ -9,14 +9,13 @@ defmodule API.Job do
   alias API.Recruiter
 
   defenum(Status, draft: 0, published: 1, unpublished: 2)
-  defenum(EmploymentType, full_time: 0, part_time: 1)
+  defenum(EmploymentType, full_time: 0, locum: 1)
 
   schema "job" do
     belongs_to :recruiter, Recruiter
     field :status, Status, default: :draft
 
     field :employment_type, EmploymentType
-    # TODO shifts?
     belongs_to :parent_job, __MODULE__
 
     field :title, :string
@@ -39,10 +38,6 @@ defmodule API.Job do
     has_many :compensations, JobCompensation
     has_many :applications, JobApplication
 
-    # TODO incentives
-    # TODO responsibilities
-    # TODO qualifications
-
     timestamps()
   end
 
@@ -61,5 +56,39 @@ defmodule API.Job do
     |> validate_required(params)
     |> validate_enum(:employment_type)
     |> foreign_key_constraint(:recruiter_id)
+  end
+
+  @spec update_basic_info(t(), data) :: Changeset.t()
+        when data: %{title: binary(), description: binary()}
+  def update_basic_info(%__MODULE__{} = job, data) do
+    params = ~w(title description)a
+
+    job
+    |> cast(data, params)
+    |> validate_required(params)
+  end
+
+  @spec update_address(t(), data) :: Changeset.t()
+        when data: %{
+               optional(:address_line_two) => binary(),
+               address_latitude: float(),
+               address_longitude: float(),
+               address_line_one: binary(),
+               address_city: binary(),
+               address_state: binary(),
+               address_postal_code: binary(),
+               address_country_code: binary()
+             }
+  def update_address(%__MODULE__{} = job, data) do
+    optional_params = ~w(address_line_two)a
+
+    required_params =
+      ~w(address_latitude address_longitude address_line_one address_city address_state address_postal_code address_country_code)a
+
+    params = optional_params ++ required_params
+
+    job
+    |> cast(data, params)
+    |> validate_required(required_params)
   end
 end

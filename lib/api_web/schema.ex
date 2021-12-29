@@ -3,20 +3,29 @@ defmodule APIWeb.Schema do
 
   use Absinthe.Schema
 
+  alias APIWeb.JobListingDataloader
+
   import_types(Absinthe.Type.Custom)
   import_types(APIWeb.ConnectionType)
+  import_types(APIWeb.CountryType)
+  import_types(APIWeb.JobType)
   import_types(APIWeb.UserType)
   import_types(APIWeb.Uuid4Type)
 
+  import_types(APIWeb.CountriesResolver)
+  import_types(APIWeb.JobListingResolver)
   import_types(APIWeb.ProfileResolver)
   import_types(APIWeb.UserResolver)
 
   query do
-    import_fields(:user_queries)
+    import_fields(:countries_queries)
+    import_fields(:job_listing_queries)
     import_fields(:profile_queries)
+    import_fields(:user_queries)
   end
 
   mutation do
+    import_fields(:job_listing_mutations)
     import_fields(:profile_mutations)
   end
 
@@ -27,6 +36,7 @@ defmodule APIWeb.Schema do
     loader =
       Dataloader.new()
       |> Dataloader.add_source(:repo, repo_source)
+      |> JobListingDataloader.add_source()
 
     Map.put(ctx, :loader, loader)
   end

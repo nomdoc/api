@@ -30,7 +30,7 @@ defmodule API.Repo do
     )
   end
 
-  @type paginate_opts :: [
+  @type pagination_opts :: [
           after: binary(),
           before: binary(),
           limit: pos_integer(),
@@ -51,7 +51,7 @@ defmodule API.Repo do
   enfore a maximum. Defaults to `500`.
   * `:sort_direction` - The direction used for sorting. Defaults to `:asc`.
   """
-  @spec paginate(Ecto.Queryable.t(), [atom()], paginate_opts(), Keyword.t()) ::
+  @spec paginate(Ecto.Queryable.t(), [atom()], pagination_opts(), Keyword.t()) ::
           {:ok, API.Pagination.t()} | {:error, :invalid_pagination_cursor}
   def paginate(queryable, cursor_fields, opts \\ [], repo_opts \\ []) do
     defaults = [limit: 25, cursor_fields: cursor_fields, include_total_count: false]
