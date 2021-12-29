@@ -60,6 +60,17 @@ config :hammer,
        redis_url: [url: redis_url]
      ]}
 
+if config_env() == :test do
+  config :hammer,
+    backend:
+      {Hammer.Backend.ETS,
+       [
+         ets_table_name: :hammer_backend_ets_buckets,
+         expiry_ms: 5 * 60 * 1_000,
+         cleanup_interval_ms: 2 * 60 * 1_000
+       ]}
+end
+
 config :api, API.Accounts,
   login_token_hash_key: login_token_hash_key,
   access_token_signer_key: access_token_signer_key

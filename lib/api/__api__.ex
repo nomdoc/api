@@ -7,14 +7,20 @@ defmodule API do
       # Contexts
       Auth,
       HandleNames,
+      JobListing,
       Users,
 
       # Model
+      Country,
       HandleName,
+      Job,
+      Recruiter,
       RefreshToken,
       User,
 
       # Modules
+      Countries,
+      Pagination,
       Pwned,
       RateLimiter,
       Recaptcha,
@@ -32,6 +38,7 @@ defmodule API do
       import Ecto.Query
       import EctoEnum
 
+      alias API.Repo
       alias Ecto.Changeset
 
       @primary_key {:id, :binary_id, autogenerate: true}

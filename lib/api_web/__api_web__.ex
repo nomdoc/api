@@ -44,13 +44,18 @@ defmodule APIWeb do
       import APIWeb.SchemaHelpers
 
       alias API.Auth
+      alias API.Countries
+      alias API.Country
       alias API.HandleName
       alias API.HandleNames
+      alias API.Job
+      alias API.JobListing
       alias API.RefreshToken
       alias API.Repo
       alias API.User
       alias API.Users
 
+      alias APIWeb.EnforceJobListingAccessMiddleware
       alias APIWeb.EnforceProfileAccessMiddleware
       alias APIWeb.EnsureAuthenticatedMiddleware
       alias Ecto.Changeset

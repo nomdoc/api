@@ -26,4 +26,18 @@ defmodule API.Factory do
       absolute_timeout_at: API.RefreshToken.generate_absolute_timeout_at()
     }
   end
+
+  def recruiter_factory() do
+    %API.Recruiter{
+      entity_id: Ecto.UUID.generate()
+    }
+  end
+
+  def job_factory() do
+    %API.Job{
+      recruiter: build(:recruiter),
+      employment_type: :locum,
+      title: Faker.Lorem.sentence(3..5)
+    }
+  end
 end
