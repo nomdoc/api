@@ -46,6 +46,7 @@ defmodule API.MixProject do
       {:bamboo_postmark, "~> 1.0.0"},
       {:burnex, "~> 3.1.0"},
       {:corsica, "~> 1.1.3"},
+      {:countries, "~> 1.6.0"},
       {:dataloader, "~> 1.0.9"},
       {:domo, "~> 1.3.4"},
       {:ecto_enum, "~> 1.4.0"},
